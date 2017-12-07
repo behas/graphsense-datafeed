@@ -35,9 +35,9 @@ class QueryManager(object):
                       VALUES (?, ?, ?, ?, ?, ?);"""
         cls.insert_block_stmt = cls.session.prepare(cql_stmt)
 
-        cql_stmt = """INSERT INTO transaction (tx_hash, height, timestamp,
+        cql_stmt = """INSERT INTO transaction (block_group, tx_number, tx_hash, height, timestamp,
                                                coinbase, vin, vout)
-                      VALUES (?, ?, ?, ?, ?, ?);"""
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?);"""
         cls.insert_transaction_stmt = cls.session.prepare(cql_stmt)
 
     def insert(self, files):
@@ -65,8 +65,11 @@ class QueryManager(object):
 
                 batchStmt = BatchStatement()
                 batchStmt.add(cls.insert_block_stmt, block)
+                block_group = block[0] // 10000
+                tx_number = 0
                 for transaction in transactions:
-                    batchStmt.add(cls.insert_transaction_stmt, transaction)
+                    batchStmt.add(cls.insert_transaction_stmt, [block_group, tx_number] + transaction)
+                    tx_number+=1
 
                 while True:
                     try:
@@ -86,6 +89,9 @@ def main():
     parser.add_argument("-c", "--cassandra", dest="cassandra",
                         help="cassandra node",
                         default="localhost")
+    parser.add_argument("-k", "--keyspace", dest="keyspace",
+                        help="keyspace to import data to",
+                        default="graphsense_raw")
     parser.add_argument("-d", "--dir", dest="directory",
                         help="source directory for raw json bitcoin dump")
     parser.add_argument("-p", "--processes", dest="processes",
@@ -100,7 +106,7 @@ def main():
              for f in os.listdir(args.directory)
              if os.path.isfile(os.path.join(args.directory, f))]
 
-    qm = QueryManager(args.cassandra, "graphsense_raw", args.processes)
+    qm = QueryManager(args.cassandra, args.keyspace, args.processes)
     start = time.time()
     qm.insert(files)
     delta = time.time() - start

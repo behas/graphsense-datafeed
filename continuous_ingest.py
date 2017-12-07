@@ -9,7 +9,7 @@ from cassandra.query import BatchStatement
 import blockutil
 
 LOG_LEVEL = logging.INFO  # Could be e.g. "DEBUG" or "WARNING"
-
+BLOCK_0 = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
 
 # class to capture stdout and sterr in the log
 class MyLogger(object):
@@ -23,6 +23,10 @@ class MyLogger(object):
         if message.rstrip() != "":
             self.logger.log(self.level, message.rstrip())
 
+class FakeRS(object):
+    def __init__(self, block_hash, height):
+        self.block_hash = block_hash
+        self.height = height
 
 class BlockchainIngest:
 
@@ -32,9 +36,9 @@ class BlockchainIngest:
                                          block_version, size, txs)
                       VALUES (?, ?, ?, ?, ?, ?);"""
         self.__insert_block_stmt = session.prepare(cql_stmt)
-        cql_stmt = """INSERT INTO transaction (tx_hash, height, timestamp,
+        cql_stmt = """INSERT INTO transaction (block_group, tx_number, tx_hash, height, timestamp,
                                                coinbase, vin, vout)
-                      VALUES (?, ?, ?, ?, ?, ?);"""
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?);"""
         self.__insert_transaction_stmt = session.prepare(cql_stmt)
 
     def write_next_blocks(self, start_block):
@@ -45,8 +49,11 @@ class BlockchainIngest:
                 next_block, block, txs = blockutil.transform_json(block_json)
                 batchStmt = BatchStatement()
                 batchStmt.add(self.__insert_block_stmt, block)
+                block_group = block[0] // 10000
+                tx_number = 0
                 for transaction in txs:
-                    batchStmt.add(self.__insert_transaction_stmt, transaction)
+                    batchStmt.add(self.__insert_transaction_stmt, [block_group, tx_number] + transaction)
+                    tx_number+=1
                 while True:
                     try:
                         self.__session.execute(batchStmt)
@@ -56,9 +63,8 @@ class BlockchainIngest:
                     break
                 print("Wrote block %d" % (block[0]), end="\r")
 
-    def get_last_block(self):
-        select_stmt = """SELECT height, block_hash
-                         FROM graphsense_raw.block WHERE height = ?;"""
+    def get_last_block(self, keyspace):
+        select_stmt = "SELECT height, block_hash FROM " + keyspace + ".block WHERE height = ?;"
         block_max = 0
         block_inc = 100000
         last_rs = None
@@ -68,6 +74,8 @@ class BlockchainIngest:
             rs = self.__session.execute(self.__session.prepare(select_stmt),
                                         [block_max])
             if not rs:
+                if block_max == 0:
+                    return [FakeRS(bytearray.fromhex(BLOCK_0), 0)]
                 if block_inc == 1:
                     return last_rs
                 else:
@@ -85,6 +93,9 @@ def main():
     parser.add_argument("-c", "--cassandra", dest="cassandra",
                         default="localhost", metavar="CASSANDRA_NODE",
                         help="address or name of cassandra database")
+    parser.add_argument("-k", "--keyspace", dest="keyspace",
+                        help="keyspace to import data to",
+                        default="graphsense_raw")
     parser.add_argument("-s", "--sleep", dest="sleep",
                         type=int, default=600,
                         help="numbers of seconds to sleep " +
@@ -112,13 +123,13 @@ def main():
     cluster = Cluster([args.cassandra])
     session = cluster.connect()
     session.default_timeout = 60
-    session.set_keyspace("graphsense_raw")
+    session.set_keyspace(args.keyspace)
     bc_ingest = BlockchainIngest(session)
 
     blockutil.set_blockchain_api("http://%s:8332/rest/block/" % args.bitcoin)
 
     while True:
-        last_rs = bc_ingest.get_last_block()
+        last_rs = bc_ingest.get_last_block(args.keyspace)
         if last_rs:
             hash_val = last_rs[0].block_hash
             print("Found last block:")
