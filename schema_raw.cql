@@ -1,7 +1,7 @@
-DROP KEYSPACE IF EXISTS graphsense_raw;
-CREATE KEYSPACE graphsense_raw WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1 };
+DROP KEYSPACE IF EXISTS graphsense_raw_new;
+CREATE KEYSPACE graphsense_raw_new WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1 };
 
-USE graphsense_raw;
+USE graphsense_raw_new;
 
 // BITCOIN blockchain data
 
@@ -26,13 +26,15 @@ CREATE TABLE block (
 );
 
 CREATE TABLE transaction (
+    block_group int,
     height int,
     tx_hash blob,
+    tx_number int,
     timestamp int,
     coinbase boolean,
     vin list<FROZEN<input>>,
     vout list<FROZEN<output>>,
-    PRIMARY KEY (height, tx_hash)
+    PRIMARY KEY (block_group, height, tx_hash)
 );
 
 CREATE TABLE exchange_rates (
