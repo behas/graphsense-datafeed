@@ -11,6 +11,7 @@ import blockutil
 LOG_LEVEL = logging.INFO  # Could be e.g. "DEBUG" or "WARNING"
 BLOCK_0 = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
 
+
 # class to capture stdout and sterr in the log
 class MyLogger(object):
     def __init__(self, logger, level):
@@ -23,21 +24,24 @@ class MyLogger(object):
         if message.rstrip() != "":
             self.logger.log(self.level, message.rstrip())
 
+
 class FakeRS(object):
     def __init__(self, block_hash, height):
         self.block_hash = block_hash
         self.height = height
 
+
 class BlockchainIngest:
 
     def __init__(self, session):
         self.__session = session
-        cql_stmt = """INSERT INTO block (height, block_hash, timestamp,
-                                         block_version, size, txs)
+        cql_stmt = """INSERT INTO block
+                      (height, block_hash, timestamp, block_version, size, txs)
                       VALUES (?, ?, ?, ?, ?, ?);"""
         self.__insert_block_stmt = session.prepare(cql_stmt)
-        cql_stmt = """INSERT INTO transaction (block_group, tx_number, tx_hash, height, timestamp,
-                                               coinbase, vin, vout)
+        cql_stmt = """INSERT INTO transaction
+                      (block_group, tx_number, tx_hash, height,
+                       timestamp, coinbase, vin, vout)
                       VALUES (?, ?, ?, ?, ?, ?, ?, ?);"""
         self.__insert_transaction_stmt = session.prepare(cql_stmt)
 
@@ -52,8 +56,9 @@ class BlockchainIngest:
                 block_group = block[0] // 10000
                 tx_number = 0
                 for transaction in txs:
-                    batchStmt.add(self.__insert_transaction_stmt, [block_group, tx_number] + transaction)
-                    tx_number+=1
+                    batchStmt.add(self.__insert_transaction_stmt,
+                                  [block_group, tx_number] + transaction)
+                    tx_number += 1
                 while True:
                     try:
                         self.__session.execute(batchStmt)
@@ -64,7 +69,8 @@ class BlockchainIngest:
                 print("Wrote block %d" % (block[0]), end="\r")
 
     def get_last_block(self, keyspace):
-        select_stmt = "SELECT height, block_hash FROM " + keyspace + ".block WHERE height = ?;"
+        select_stmt = "SELECT height, block_hash FROM " + keyspace + \
+                      ".block WHERE height = ?;"
         block_max = 0
         block_inc = 100000
         last_rs = None

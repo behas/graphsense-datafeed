@@ -68,8 +68,9 @@ class QueryManager(object):
                 block_group = block[0] // 10000
                 tx_number = 0
                 for transaction in transactions:
-                    batchStmt.add(cls.insert_transaction_stmt, [block_group, tx_number] + transaction)
-                    tx_number+=1
+                    batchStmt.add(cls.insert_transaction_stmt,
+                                  [block_group, tx_number] + transaction)
+                    tx_number += 1
 
                 while True:
                     try:
