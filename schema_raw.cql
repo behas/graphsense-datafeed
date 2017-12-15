@@ -1,7 +1,7 @@
-DROP KEYSPACE IF EXISTS graphsense_raw_new;
-CREATE KEYSPACE graphsense_raw_new WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1 };
+DROP KEYSPACE IF EXISTS graphsense_raw_dev_new;
+CREATE KEYSPACE graphsense_raw_dev_new WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 3 };
 
-USE graphsense_raw_new;
+USE graphsense_raw_dev_new;
 
 // BITCOIN blockchain data
 
