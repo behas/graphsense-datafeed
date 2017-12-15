@@ -55,7 +55,7 @@ and stores them in binary format to `block_*` files within the sample folder
 interface)
 
     mkdir data
-    python fetch_blocks.py -p ./data/block -b BITCOINCLIENT -n 10000
+    python fetch_blocks.py -p ./data/block -b BITCOINCLIENT -n 50000
 
 The -p option specifies the prefix of the files generated
 (e.g. `./data/dump_` string will save 32Mb files named
