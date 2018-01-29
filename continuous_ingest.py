@@ -4,18 +4,19 @@ import sys
 import time
 import logging
 from logging.handlers import TimedRotatingFileHandler
+from pathlib import Path
 from cassandra.cluster import Cluster
 from cassandra.query import BatchStatement
 import blockutil
 
-LOG_LEVEL = logging.INFO  # Could be e.g. "DEBUG" or "WARNING"
+LOG_LEVEL = logging.INFO  # could be e.g. "DEBUG" or "WARNING"
 BLOCK_0 = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
+LOCKFILE = "/var/lock/graphsense_transformation.lock"
 
 
 # class to capture stdout and sterr in the log
 class MyLogger(object):
     def __init__(self, logger, level):
-        """Needs a logger and a logger level."""
         self.logger = logger
         self.level = level
 
@@ -135,17 +136,20 @@ def main():
     blockutil.set_blockchain_api("http://%s:8332/rest/block/" % args.bitcoin)
 
     while True:
-        last_rs = bc_ingest.get_last_block(args.keyspace)
-        if last_rs:
-            hash_val = last_rs[0].block_hash
-            print("Found last block:")
-            print("\tHeight:\t%d" % last_rs[0].height)
-            print("\tHash:\t%s" % blockutil.hash_str(hash_val))
-            if hash_val:
-                bc_ingest.write_next_blocks(hash_val)
+        if Path(LOCKFILE).is_file():
+            print("Found lockfile %s, pausing ingest." % LOCKFILE)
         else:
-            print("Could not get last block. Exiting...")
-            break
+            last_rs = bc_ingest.get_last_block(args.keyspace)
+            if last_rs:
+                hash_val = last_rs[0].block_hash
+                print("Found last block:")
+                print("\tHeight:\t%d" % last_rs[0].height)
+                print("\tHash:\t%s" % blockutil.hash_str(hash_val))
+                if hash_val:
+                    bc_ingest.write_next_blocks(hash_val)
+            else:
+                print("Could not get last block. Exiting...")
+                break
         time.sleep(args.sleep)
 
 
