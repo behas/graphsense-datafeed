@@ -28,6 +28,7 @@ CREATE TABLE block (
 CREATE TABLE transaction (
     block_group int,
     height int,
+    size smallint,
     tx_hash blob,
     tx_number int,
     timestamp int,

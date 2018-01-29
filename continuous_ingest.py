@@ -41,9 +41,9 @@ class BlockchainIngest:
                       VALUES (?, ?, ?, ?, ?, ?);"""
         self.__insert_block_stmt = session.prepare(cql_stmt)
         cql_stmt = """INSERT INTO transaction
-                      (block_group, tx_number, tx_hash, height,
-                       timestamp, coinbase, vin, vout)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?);"""
+                      (block_group, tx_number, tx_hash,
+                       height, timestamp, size, coinbase, vin, vout)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);"""
         self.__insert_transaction_stmt = session.prepare(cql_stmt)
 
     def write_next_blocks(self, start_block):

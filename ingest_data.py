@@ -30,14 +30,15 @@ class QueryManager(object):
         cls.session = cls.cluster.connect()
         cls.session.default_timeout = 60
         cls.session.set_keyspace(keyspace)
-        cql_stmt = """INSERT INTO block (height, block_hash, timestamp,
-                                         block_version, size, txs)
+        cql_stmt = """INSERT INTO block
+                      (height, block_hash, timestamp, block_version, size, txs)
                       VALUES (?, ?, ?, ?, ?, ?);"""
         cls.insert_block_stmt = cls.session.prepare(cql_stmt)
 
-        cql_stmt = """INSERT INTO transaction (block_group, tx_number, tx_hash, height, timestamp,
-                                               coinbase, vin, vout)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?);"""
+        cql_stmt = """INSERT INTO transaction
+                      (block_group, tx_number, tx_hash,
+                       height, timestamp, size, coinbase, vin, vout)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);"""
         cls.insert_transaction_stmt = cls.session.prepare(cql_stmt)
 
     def insert(self, files):
