@@ -50,24 +50,23 @@ class BlockchainIngest:
         next_block = blockutil.hash_str(start_block)
         while next_block:
             block_json = blockutil.fetch_block_json(next_block)
-            if "nextblockhash" in block_json.keys():
-                next_block, block, txs = blockutil.transform_json(block_json)
-                batchStmt = BatchStatement()
-                batchStmt.add(self.__insert_block_stmt, block)
-                block_group = block[0] // 10000
-                tx_number = 0
-                for transaction in txs:
-                    batchStmt.add(self.__insert_transaction_stmt,
-                                  [block_group, tx_number] + transaction)
-                    tx_number += 1
-                while True:
-                    try:
-                        self.__session.execute(batchStmt)
-                    except Exception as err:
-                        print("Exception ", err, " retrying...", end="\r")
-                        continue
-                    break
-                print("Wrote block %d" % (block[0]), end="\r")
+            next_block, block, txs = blockutil.transform_json(block_json)
+            batchStmt = BatchStatement()
+            batchStmt.add(self.__insert_block_stmt, block)
+            block_group = block[0] // 10000
+            tx_number = 0
+            for transaction in txs:
+                batchStmt.add(self.__insert_transaction_stmt,
+                              [block_group, tx_number] + transaction)
+                tx_number += 1
+            while True:
+                try:
+                    self.__session.execute(batchStmt)
+                except Exception as err:
+                    print("Exception ", err, " retrying...", end="\r")
+                    continue
+                break
+            print("Wrote block %d" % (block[0]), end="\r")
 
     def get_last_block(self, keyspace):
         select_stmt = "SELECT height, block_hash FROM " + keyspace + \
