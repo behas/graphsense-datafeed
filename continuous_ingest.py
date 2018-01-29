@@ -15,7 +15,7 @@ LOCKFILE = "/var/lock/graphsense_transformation.lock"
 
 
 # class to capture stdout and sterr in the log
-class MyLogger(object):
+class Logger(object):
     def __init__(self, logger, level):
         self.logger = logger
         self.level = level
@@ -122,9 +122,9 @@ def main():
         handler.setFormatter(formatter)
         logger.addHandler(handler)
         # log stdout to file at INFO level
-        sys.stdout = MyLogger(logger, logging.INFO)
+        sys.stdout = Logger(logger, logging.INFO)
         # log stderr to file at ERROR level
-        sys.stderr = MyLogger(logger, logging.ERROR)
+        sys.stderr = Logger(logger, logging.ERROR)
 
     cluster = Cluster([args.cassandra])
     session = cluster.connect()
