@@ -94,21 +94,19 @@ def main():
     parser.add_argument("-k", "--keyspace", dest="keyspace",
                         help="keyspace to import data to",
                         default="graphsense_raw")
-    parser.add_argument("-d", "--dir", dest="directory",
-                        help="source directory for raw json bitcoin dump")
-    parser.add_argument("-p", "--processes", dest="processes",
+    parser.add_argument("-d", "--directory", dest="directory", required=True,
+                        help="source directory for raw JSON block dumps")
+    parser.add_argument("-p", "--processes", dest="num_proc",
                         type=int, default=1,
                         help="number of processes")
 
     args = parser.parse_args()
-    if args.directory is None:
-        parser.error("Directory not given.")
 
     files = [os.path.join(args.directory, f)
              for f in os.listdir(args.directory)
              if os.path.isfile(os.path.join(args.directory, f))]
 
-    qm = QueryManager(args.cassandra, args.keyspace, args.processes)
+    qm = QueryManager(args.cassandra, args.keyspace, args.num_proc)
     start = time.time()
     qm.insert(files)
     delta = time.time() - start

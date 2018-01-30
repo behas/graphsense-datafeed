@@ -92,10 +92,16 @@ class BlockchainIngest:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Bitcoin ingest service")
-    parser.add_argument("-b", "--bitcoin", dest="bitcoin",
-                        default="localhost", metavar="BITCOIN_HOST",
-                        help="address or name of bitcoin REST interface")
+    parser = argparse.ArgumentParser(description="Bitcoin ingest service",
+                                     add_help=False)
+    parser.add_argument('--help', action='help',
+                        help='show this help message and exit')
+    parser.add_argument("-h", "--host", dest="host", required=True,
+                        default="localhost", metavar="RPC_HOST",
+                        help="host running bitcoin RPC interface")
+    parser.add_argument("-p", "--port", dest="port",
+                        type=int, default=8332,
+                        help="port number of RPC interface")
     parser.add_argument("-c", "--cassandra", dest="cassandra",
                         default="localhost", metavar="CASSANDRA_NODE",
                         help="address or name of cassandra database")
@@ -105,7 +111,7 @@ def main():
     parser.add_argument("-s", "--sleep", dest="sleep",
                         type=int, default=600,
                         help="numbers of seconds to sleep " +
-                             "before checking for new blocks.")
+                             "before checking for new blocks")
     parser.add_argument("-l", "--log", dest="log",
                         help="Location of log file")
     args = parser.parse_args()
@@ -132,7 +138,8 @@ def main():
     session.set_keyspace(args.keyspace)
     bc_ingest = BlockchainIngest(session)
 
-    blockutil.set_blockchain_api("http://%s:8332/rest/block/" % args.bitcoin)
+    blockutil.set_blockchain_api("http://%s:%d/rest/block/" %
+                                 (args.host, args.port))
 
     while True:
         if Path(LOCKFILE).is_file():

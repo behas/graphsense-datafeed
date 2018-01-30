@@ -55,12 +55,11 @@ and stores them in binary format to `block_*` files within the sample folder
 interface)
 
     mkdir data
-    python fetch_blocks.py -p ./data/block -b BITCOINCLIENT -n 50000
+    python fetch_blocks.py -d ./data -h BITCOIN_CLIENT -n 50000
 
-The -p option specifies the prefix of the files generated
-(e.g. `./data/dump_` string will save 32Mb files named
-`dump_` into the `data` folder) and the -b option specifies
-the server running the Bitcoin server.
+The -f option specifies the prefix of the files generated (saves 32Mb files
+named into the `data` folder) and the -h option specifies the server running
+the Bitcoin server.
 
 Ingest the blocks from the data directory into Cassandra
 
@@ -70,19 +69,19 @@ The -c option specifies that your Cassandra server is running on the
 localhost and the -p options specifies the number of worker processes to
 be used by the ingest.
 
-If necessary the `continuous_ingest` script can be started after the
+If necessary the `continuous_ingest.py` script can be started after the
 `ingest_raw.py` script in order to retrieve and ingest the blocks
 present in the blockchain but not ingested into Cassandra. This script
-checks every 10 seconds (-s option) for newly available blocks and
-ingests them.
+checks periodically (specified via the -s option) for newly available
+blocks and ingests them.
 
-    python continuous_ingest.py -b BITCOINCLIENT -c localhost -s 10
+    python continuous_ingest.py -h BITCOIN_CLIENT -c localhost -s 10
 
 ## Ingest exchange rates
 
     python fetch_exchange_rates.py -c localhost
 
-The -c option specifies that your Cassandra server is running on the
+The -c option specifies that the Cassandra server is running on the
 localhost.
 
 [bitcoin-client]: https://github.com/graphsense/bitcoin-client
