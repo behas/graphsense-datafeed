@@ -1,8 +1,8 @@
 from argparse import ArgumentParser
 import json
+import os
 import pickle
 import blockutil
-from pathlib import Path
 
 BLOCK_0 = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
 
@@ -17,8 +17,9 @@ def write_blocks_to_file(directory, file_prefix, start_block, no_blocks):
         if not out or (out and (out.tell() > filesize)):
             if out:
                 out.close()
-            filename = Path(directory, "%s_%s.bin" % (file_prefix, counter))
-            print("Writing to file " + str(filename))
+            filename = os.path.join(directory,
+                                    "%s_%s.bin" % (file_prefix, counter))
+            print("Writing to file " + filename)
             out = open(filename, "wb")
         block_json = json.loads(blockutil.fetch_block_text(next_block))
 
