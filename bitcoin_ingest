@@ -14,7 +14,7 @@
 DIR=
 DAEMON=$DIR/continuous_ingest.py
 DAEMON_NAME=bitcoin_ingest
-DAEMON_OPTS="-b localhost -c localhost -l /var/log/bitcoin_ingest.log"
+DAEMON_OPTS="-h localhost -c localhost -l /var/log/bitcoin_ingest.log"
 ###
 
 # This next line determines what user the script runs as.

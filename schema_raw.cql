@@ -26,13 +26,16 @@ CREATE TABLE block (
 );
 
 CREATE TABLE transaction (
+    block_group int,
     height int,
+    size int,
     tx_hash blob,
+    tx_number int,
     timestamp int,
     coinbase boolean,
     vin list<FROZEN<input>>,
     vout list<FROZEN<output>>,
-    PRIMARY KEY (height, tx_hash)
+    PRIMARY KEY (block_group, height, tx_hash)
 );
 
 CREATE TABLE exchange_rates (

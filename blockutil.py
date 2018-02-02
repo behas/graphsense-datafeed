@@ -16,6 +16,7 @@ def transform_json(raw_block):
         tx.append(bytearray.fromhex(raw_tx["hash"]))
         tx.append(raw_block["height"])
         tx.append(raw_block["time"])
+        tx.append(raw_block["size"])
 
         coinbase = False
         vins = []
@@ -55,7 +56,11 @@ def transform_json(raw_block):
     block.append(raw_block["size"])
     block.append(transaction_ids)
 
-    return (raw_block["nextblockhash"], block, transactions)
+    if "nextblockhash" in raw_block.keys():
+        next_block = raw_block["nextblockhash"]
+    else:
+        next_block = None
+    return (next_block, block, transactions)
 
 
 def fetch_block(block_hash):

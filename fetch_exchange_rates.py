@@ -17,7 +17,7 @@ def ingest_exchange_rates(session, currency="eur",
     fetch_url = CSV_URL.format(security_no, boerse_id)
     print("Fetching exchange rates from {}\n".format(fetch_url))
 
-    insert_stmt = """INSERT INTO graphsense_raw.exchange_rates
+    insert_stmt = """INSERT INTO exchange_rates
                      (timestamp, {}) VALUES (?, ?)""".format(currency)
     prep_stmt = session.prepare(insert_stmt)
 
@@ -42,11 +42,15 @@ def main():
     parser.add_argument("-c", "--cassandra", dest="cassandra",
                         metavar="CASSANDRA_NODE", default="localhost",
                         help="cassandra node")
+    parser.add_argument("-k", "--keyspace", dest="keyspace",
+                        help="keyspace to import data to",
+                        default="graphsense_raw")
 
     args = parser.parse_args()
 
     cluster = Cluster([args.cassandra])
     session = cluster.connect()
+    session.set_keyspace(args.keyspace)
 
     ingest_exchange_rates(session, "eur", BTC_EUR[0], BTC_EUR[1])
     ingest_exchange_rates(session, "usd", BTC_USD[0], BTC_USD[1])
