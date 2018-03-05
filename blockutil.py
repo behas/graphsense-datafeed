@@ -13,7 +13,7 @@ def transform_json(raw_block):
     transactions = []
     for raw_tx in raw_block["tx"]:
         tx = []
-        tx.append(bytearray.fromhex(raw_tx["hash"]))
+        tx.append(bytearray.fromhex(raw_tx["txid"]))
         tx.append(raw_block["height"])
         tx.append(raw_block["time"])
         tx.append(raw_block["size"])
