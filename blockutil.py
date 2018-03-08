@@ -1,6 +1,5 @@
 import requests
 import sys
-import segwit_addr
 
 
 BLOCKCHAIN_API = ''
@@ -47,12 +46,6 @@ def transform_json(raw_block, tx_type_counter):
                 addr = []
                 if "addresses" in script_pubkey.keys():
                     addr = script_pubkey["addresses"]
-                # segwit P2WPKH/P2WSH
-                elif script_pubkey["type"] in ["witness_v0_keyhash",
-                                               "witness_v0_scripthash"]:
-                    hash160 = script_pubkey["asm"][2:]
-                    addr = [segwit_addr.encode("bc", 0,
-                                               bytearray.fromhex(hash160))]
                 else:
                     tx_type_counter["tx_not_captured"] += 1
             vout.append(addr)
