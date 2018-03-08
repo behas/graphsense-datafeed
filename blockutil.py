@@ -1,5 +1,7 @@
 import requests
 import sys
+import segwit_addr
+
 
 BLOCKCHAIN_API = ''
 
@@ -8,7 +10,7 @@ def hash_str(bytebuffer):
     return "".join(("%02x" % a) for a in bytebuffer)
 
 
-def transform_json(raw_block):
+def transform_json(raw_block, tx_type_counter):
     transaction_ids = []
     transactions = []
     for raw_tx in raw_block["tx"]:
@@ -39,11 +41,21 @@ def transform_json(raw_block):
                 vout.append(int(raw_vout["value"] * 1e8 + 0.1))
             if "n" in raw_vout.keys():
                 vout.append(raw_vout["n"])
-            adresses = []
             if "scriptPubKey" in raw_vout.keys():
-                if "addresses" in raw_vout["scriptPubKey"].keys():
-                    adresses = raw_vout["scriptPubKey"]["addresses"]
-            vout.append(adresses)
+                script_pubkey = raw_vout["scriptPubKey"]
+                tx_type_counter[script_pubkey["type"]] += 1
+                addr = []
+                if "addresses" in script_pubkey.keys():
+                    addr = script_pubkey["addresses"]
+                # segwit P2WPKH/P2WSH
+                elif script_pubkey["type"] in ["witness_v0_keyhash",
+                                               "witness_v0_scripthash"]:
+                    hash160 = script_pubkey["asm"][2:]
+                    addr = [segwit_addr.encode("bc", 0,
+                                               bytearray.fromhex(hash160))]
+                else:
+                    tx_type_counter["tx_not_captured"] += 1
+            vout.append(addr)
             vouts.append(vout)
         tx.append(vouts)
         transactions.append(tx)
